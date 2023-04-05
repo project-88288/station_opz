@@ -2,7 +2,9 @@ import { useTranslation } from "react-i18next"
 import { useIsClassic } from "data/query"
 import { useNetworkName } from "data/wallet"
 import { LinkButton } from "components/general"
+// eslint-disable-next-line
 import { Card, Page } from "components/layout"
+// eslint-disable-next-line
 import { Wrong } from "components/feedback"
 import TxContext from "../TxContext"
 import SwapContext from "./SwapContext"
@@ -19,6 +21,7 @@ import TFMPoweredBy from "./TFMPoweredBy"
 
 const SwapTx = () => {
   const { t } = useTranslation()
+  // eslint-disable-next-line
   const networkName = useNetworkName()
   const isClassic = useIsClassic()
 
@@ -28,6 +31,7 @@ const SwapTx = () => {
     </LinkButton>
   )
 
+  /*
   if (networkName === "testnet") {
     return (
       <Page title={t("Swap")} small>
@@ -37,6 +41,7 @@ const SwapTx = () => {
       </Page>
     )
   }
+  */
 
   if (!isClassic)
     return (

@@ -1,35 +1,46 @@
+// eslint-disable-next-line
 import { Fragment, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { useInfiniteQuery } from "react-query"
 import axios from "axios"
 import { queryKey } from "data/query"
-import { useAddress } from "data/wallet"
-import { useTerraAPIURL } from "data/Terra/TerraAPI"
 import { Button } from "components/general"
 import { Card, Col, Page } from "components/layout"
 import { Empty } from "components/feedback"
-import HistoryItem from "./HistoryItem"
+import { useTerraLCDURL } from "data/Terra/TerraAPI"
+import useAddress from "auth/hooks/useAddress"
+import HistoryItemLcd from "../HistoryItemLcd"
 
-const HistoryList = () => {
+interface AccountHistory {
+  next: number | false
+  pagination: {
+    total: string
+    next_key: string | null
+  }
+  tx_responses: AccountHistoryItem[]
+}
+
+const HistoryListLcd = () => {
   const { t } = useTranslation()
   const address = useAddress()
-  const baseURL = useTerraAPIURL()
+  const baseURL = useTerraLCDURL()
+  // @typescript-eslint/no-unused-vars
+  // const LIMIT = 10
 
   /* query */
   const fetchAccountHistory = useCallback(
     async ({ pageParam = 0 }) => {
       const { data } = await axios.get<AccountHistory>(
-        `tx-history/station/${address}`,
+        `/cosmos/tx/v1beta1/txs?events=message.sender=%27${address}%27&pagination.reverse=true&order_by=ORDER_BY_DESC`, //&pagination.limit=${LIMIT}`,
         { baseURL, params: { offset: pageParam || undefined } }
       )
-
       return data
     },
     [address, baseURL]
   )
 
   const { data, error, fetchNextPage, ...state } = useInfiniteQuery(
-    [queryKey.TerraAPI, "history", baseURL, address],
+    [queryKey.History, "history", baseURL, address],
     fetchAccountHistory,
     { getNextPageParam: ({ next }) => next, enabled: !!(address && baseURL) }
   )
@@ -39,25 +50,24 @@ const HistoryList = () => {
   const getPages = () => {
     if (!data) return []
     const { pages } = data
-    const [{ list }] = data.pages
-    return list.length ? pages : []
+    const [{ tx_responses }] = data.pages
+    return tx_responses.length ? pages : []
   }
 
   const pages = getPages()
 
   const render = () => {
     if (address && !data) return null
-
     return !pages.length ? (
       <Card>
         <Empty />
       </Card>
     ) : (
       <Col>
-        {pages.map(({ list }, i) => (
+        {pages.map(({ tx_responses }, i) => (
           <Fragment key={i}>
-            {list.map((item) => (
-              <HistoryItem {...item} key={item.txhash} />
+            {tx_responses.map((item) => (
+              <HistoryItemLcd {...item} key={item.txhash} />
             ))}
           </Fragment>
         ))}
@@ -85,4 +95,4 @@ const HistoryList = () => {
   )
 }
 
-export default HistoryList
+export default HistoryListLcd

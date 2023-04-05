@@ -11,7 +11,7 @@ import { useThemeState, useValidateTheme } from "data/settings/Theme"
 import { Flex, FlexColumn, Grid } from "components/layout"
 import { Radio } from "components/form"
 import { ModalButton } from "components/feedback"
-import HeaderIconButton from "../components/HeaderIconButton"
+import HeaderIconButton from "app/components/HeaderIconButton"
 import styles from "./SelectTheme.module.scss"
 
 const cx = classNames.bind(styles)

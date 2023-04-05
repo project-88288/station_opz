@@ -17,7 +17,7 @@ import { useNetworkName } from "data/wallet"
 import { Button, FinderLink, LinkButton } from "components/general"
 import { Modal, LoadingCircular } from "components/feedback"
 import { Flex } from "components/layout"
-import TxMessage from "../containers/TxMessage"
+import TxMessage from "app/containers/TxMessage"
 import styles from "./LatestTx.module.scss"
 
 const { createActionRuleSet, getTxCanonicalMsgs, createLogMatcherForActions } =

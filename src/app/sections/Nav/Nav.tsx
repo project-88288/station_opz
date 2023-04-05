@@ -5,7 +5,7 @@ import classNames from "classnames/bind"
 import MenuIcon from "@mui/icons-material/Menu"
 import CloseIcon from "@mui/icons-material/Close"
 import { mobileIsMenuOpenState } from "components/layout"
-import { useNav } from "../routes"
+import { useNav } from "app/routes"
 import styles from "./Nav.module.scss"
 
 const cx = classNames.bind(styles)

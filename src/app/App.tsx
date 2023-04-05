@@ -1,5 +1,6 @@
 import { getErrorMessage } from "utils/error"
 import Layout, { Page } from "components/layout"
+// eslint-disable-next-line
 import { Banner, Content, Header, Actions, Sidebar } from "components/layout"
 import { ErrorBoundary, Wrong } from "components/feedback"
 
@@ -7,13 +8,14 @@ import { ErrorBoundary, Wrong } from "components/feedback"
 import { useNav } from "./routes"
 
 /* banner */
-import NetworkName from "./sections/NetworkName"
 
 /* sidebar */
 import Nav from "./sections/Nav"
 import Aside from "./sections/Aside"
 
 /* header */
+import NetworkName from "./sections/NetworkName"
+// eslint-disable-next-line
 import IsClassicNetwork from "./sections/IsClassicNetwork"
 import Refresh from "./sections/Refresh"
 import Preferences from "./sections/Preferences"
@@ -33,17 +35,13 @@ const App = () => {
 
   return (
     <Layout>
-      <Banner>
-        <NetworkName />
-      </Banner>
-
       <Sidebar>
         <Nav />
         <Aside />
       </Sidebar>
 
       <Header>
-        <IsClassicNetwork />
+        <NetworkName />
 
         <Actions>
           <DevTools />

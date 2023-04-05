@@ -1,6 +1,6 @@
 import { Grid } from "components/layout"
-import LastHeight from "./LastHeight"
-import Links from "./Links"
+import LastHeight from "app/sections/LastHeight"
+import Links from "app/sections/Links"
 import styles from "./Aside.module.scss"
 
 const Aside = () => {

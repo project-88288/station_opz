@@ -10,6 +10,8 @@ import { useOracleParams } from "data/queries/oracle"
 import { useNetworks } from "app/InitNetworks"
 import { queryKey, RefetchOptions } from "../query"
 
+import { terraFCDURL, terraAPIURL, terraLCDURL } from "../../config/constants"
+
 export enum Aggregate {
   PERIODIC = "periodic",
   CUMULATIVE = "cumulative",
@@ -26,6 +28,90 @@ export enum AggregateWallets {
   ACTIVE = "active",
 }
 
+/*terra API map*/
+export const useTerraAPIURL = (mainnet?: true) => {
+  const network = useNetwork()
+  const networks = useNetworks()
+  return mainnet
+    ? terraAPIURL(networks["mainnet"].name)
+    : terraAPIURL(network.name)
+}
+export const useIsTerraAPIAvailable = () => {
+  const url = useTerraAPIURL()
+  return !!url
+}
+export const useTerraAPI = <T>(path: string, params?: object, fallback?: T) => {
+  const baseURL = useTerraAPIURL()
+  const available = useIsTerraAPIAvailable()
+  const shouldFallback = !available && fallback
+
+  return useQuery<T, AxiosError>(
+    [queryKey.TerraAPI, baseURL, path, params],
+    async () => {
+      if (shouldFallback) return fallback
+      const { data } = await axios.get(path, { baseURL, params })
+      return data
+    },
+    { ...RefetchOptions.INFINITY, enabled: !!(baseURL || shouldFallback) }
+  )
+}
+/* terra FCD map*/
+export const useTerraFCDURL = (mainnet?: true) => {
+  const network = useNetwork()
+  const networks = useNetworks()
+  return mainnet
+    ? terraFCDURL(networks["mainnet"].name)
+    : terraFCDURL(network.name)
+}
+export const useIsTerraFCDAvailable = () => {
+  const url = useTerraFCDURL()
+  return !!url
+}
+export const useTerraFCD = <T>(path: string, params?: object, fallback?: T) => {
+  const baseURL = useTerraFCDURL()
+  const available = useIsTerraFCDAvailable()
+  const shouldFallback = !available && fallback
+
+  return useQuery<T, AxiosError>(
+    [queryKey.TerraAPI, baseURL, path, params],
+    async () => {
+      if (shouldFallback) return fallback
+      const { data } = await axios.get(path, { baseURL, params })
+      return data
+    },
+    { ...RefetchOptions.INFINITY, enabled: !!(baseURL || shouldFallback) }
+  )
+}
+
+/* terra LCD map*/
+export const useTerraLCDURL = (mainnet?: true) => {
+  const network = useNetwork()
+  const networks = useNetworks()
+  return mainnet
+    ? terraLCDURL(networks["mainnet"].name)
+    : terraLCDURL(network.name)
+}
+export const useIsTerraLCDAvailable = () => {
+  const url = useTerraLCDURL()
+  return !!url
+}
+export const useTerraLCD = <T>(path: string, params?: object, fallback?: T) => {
+  const baseURL = useTerraLCDURL()
+  const available = useIsTerraLCDAvailable()
+  const shouldFallback = !available && fallback
+
+  return useQuery<T, AxiosError>(
+    [queryKey.TerraAPI, baseURL, path, params],
+    async () => {
+      if (shouldFallback) return fallback
+      const { data } = await axios.get(path, { baseURL, params })
+      return data
+    },
+    { ...RefetchOptions.INFINITY, enabled: !!(baseURL || shouldFallback) }
+  )
+}
+
+/*
 export const useTerraAPIURL = (mainnet?: true) => {
   const network = useNetwork()
   const networks = useNetworks()
@@ -53,14 +139,16 @@ export const useTerraAPI = <T>(path: string, params?: object, fallback?: T) => {
   )
 }
 
+*/
+
 /* fee */
 export type GasPrices = Record<Denom, Amount>
 
 export const useGasPrices = () => {
-  const current = useTerraAPIURL()
-  const mainnet = useTerraAPIURL(true)
+  const current = useTerraFCDURL()
+  const mainnet = useTerraFCDURL(true)
   const baseURL = current ?? mainnet
-  const path = "/gas-prices"
+  const path = "/v1/txs/gas_prices"
 
   return useQuery(
     [queryKey.TerraAPI, baseURL, path],

@@ -52,7 +52,7 @@ export const terraAPIURL = (name?: String) => {
 
 /* website */
 export const STATION = "https://station.terra.money"
-export const FINDER = "https://terrascope.info"
+export const FINDER = "https://finder.terrarebels.net"
 export const EXTENSION =
   "https://chrome.google.com/webstore/detail/aiifbnbfobpmeekipheeijimdpnlpgpp"
 export const TUTORIAL =

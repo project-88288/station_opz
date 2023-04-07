@@ -7,6 +7,10 @@ import { ReadMultiple } from "components/token"
 import HistoryMessage from "../HistoryMessage"
 import styles from "./HistoryItem.module.scss"
 // eslint-disable-next-line
+import { sentenceCase } from "sentence-case"
+// eslint-disable-next-line
+import { Tag } from "components/display"
+// eslint-disable-next-line
 import DateRangeIcon from "@mui/icons-material/DateRange"
 // eslint-disable-next-line
 import GppGoodIcon from "@mui/icons-material/GppGood"
@@ -18,6 +22,7 @@ import {
   createLogMatcherForActions,
   getTxCanonicalMsgs,
 } from "@terra-money/log-finder-ruleset"
+import { last } from "ramda"
 import { TxInfo } from "@terra-money/terra.js"
 
 interface AccountHistoryItem {
@@ -41,11 +46,10 @@ const HistoryItemLcd = ({
     raw_log,
     collapsed,
     tx: {
-      body: { memo },
+      // eslint-disable-next-line
+      body: { memo, messages },
       auth_info: {
         fee: { amount: fee },
-        // eslint-disable-next-line
-        signer_infos,
       },
     },
   } = props
@@ -54,6 +58,14 @@ const HistoryItemLcd = ({
   const { t } = useTranslation()
   const networkName = useNetworkName()
   const data = [
+    {
+      title: t("Type"),
+      content:
+        !!messages &&
+        last(
+          JSON.stringify(messages[0]).split(",")[0].replace("{", "").split(".")
+        )?.replace('"', ""),
+    },
     { title: t("Fee"), content: !!fee && <ReadMultiple list={fee} /> },
     { title: t("Memo"), content: !!memo && memo },
     { title: t("Log"), content: !success && raw_log },
@@ -63,6 +75,7 @@ const HistoryItemLcd = ({
 
   const getCanonicalMsgs = (txInfo: TxInfo) => {
     const matchedMsg = getTxCanonicalMsgs(txInfo, logMatcher)
+
     return matchedMsg
       ? matchedMsg
           .map((matchedLog) => matchedLog.map(({ transformed }) => transformed))

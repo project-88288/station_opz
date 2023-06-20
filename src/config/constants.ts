@@ -5,7 +5,7 @@ export const LAZY_LIMIT = 999
 export const BRIDGE = "https://walletconnect.terra.dev"
 
 /* api */
-export const ASSETS = "https://assets.terra.money"
+export const ASSETS = "https://assets.opz.life"
 export const OBSERVER = "wss://observer.terra.dev"
 
 /* terra api map */
@@ -52,7 +52,7 @@ export const terraAPIURL = (name?: String) => {
 
 /* website */
 export const STATION = "https://station.terra.money"
-export const FINDER = "https://finder.terrarebels.net"
+export const FINDER = "https://finder.terra.money"
 export const EXTENSION =
   "https://chrome.google.com/webstore/detail/aiifbnbfobpmeekipheeijimdpnlpgpp"
 export const TUTORIAL =

@@ -10,8 +10,11 @@ import TxContext from "../TxContext"
 import SwapContext from "./SwapContext"
 import SingleSwapContext from "./SingleSwapContext"
 import SwapForm from "./SwapForm"
+// eslint-disable-next-line
 import TFMSwapContext from "./TFMSwapContext"
+// eslint-disable-next-line
 import TFMSwapForm from "./TFMSwapForm"
+// eslint-disable-next-line
 import TFMPoweredBy from "./TFMPoweredBy"
 
 // The sequence below is required before rendering the Swap form:
@@ -23,6 +26,7 @@ const SwapTx = () => {
   const { t } = useTranslation()
   // eslint-disable-next-line
   const networkName = useNetworkName()
+  // eslint-disable-next-line
   const isClassic = useIsClassic()
 
   const extra = (
@@ -31,7 +35,6 @@ const SwapTx = () => {
     </LinkButton>
   )
 
-  /*
   if (networkName === "testnet") {
     return (
       <Page title={t("Swap")} small>
@@ -41,7 +44,6 @@ const SwapTx = () => {
       </Page>
     )
   }
-  */
 
   if (!isClassic)
     return (

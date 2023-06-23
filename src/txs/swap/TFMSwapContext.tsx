@@ -50,7 +50,9 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
   const { data: ibcWhitelist, ...ibcWhitelistState } = useIBCWhitelist()
   const { data: cw20Whitelist, ...cw20WhitelistState } = useCW20Whitelist()
   const { data: TFMTokens, ...TFMTokensState } = useTFMTokens()
-
+  //
+  console.log(TFMTokens)
+  //
   // Why?
   // To search tokens with symbol (ibc, cw20)
   // To filter tokens with balance (cw20)

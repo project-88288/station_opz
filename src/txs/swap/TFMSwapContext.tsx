@@ -50,9 +50,7 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
   const { data: ibcWhitelist, ...ibcWhitelistState } = useIBCWhitelist()
   const { data: cw20Whitelist, ...cw20WhitelistState } = useCW20Whitelist()
   const { data: TFMTokens, ...TFMTokensState } = useTFMTokens()
-  //
-  console.log(TFMTokens)
-  //
+
   // Why?
   // To search tokens with symbol (ibc, cw20)
   // To filter tokens with balance (cw20)
@@ -66,7 +64,7 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
       .filter((denom) => ibcWhitelist[denom.replace("ibc/", "")])
 
     const cw20 = tokens
-      .filter(AccAddress.validate)
+      .filter((addr) => AccAddress.validate(addr))
       .filter((token) => cw20Whitelist[token])
 
     return { ibc, cw20 }

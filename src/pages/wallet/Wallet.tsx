@@ -2,8 +2,11 @@ import { Auto, Page } from "components/layout"
 import Coins from "./Coins"
 import Tokens from "./Tokens"
 import Vesting from "./Vesting"
+// eslint-disable-next-line
 import Rewards from "./Rewards"
+// eslint-disable-next-line
 import LinkEcosystem from "./LinkEcosystem"
+import Moneies from "./Moneies"
 
 const Wallet = () => {
   return (
@@ -12,8 +15,9 @@ const Wallet = () => {
         columns={[
           <>
             <Coins />
-            <Tokens />
             <Vesting />
+            <Moneies />
+            <Tokens />
           </>,
           <>
             <Rewards />

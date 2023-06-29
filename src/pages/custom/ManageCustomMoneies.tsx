@@ -14,8 +14,28 @@ interface Props {
 }
 
 const Component = ({ whitelist, keyword }: Props) => {
-  const ibc = useCustomTokensIBC()
-  const cw20 = useCustomTokensCW20()
+  let ibc = useCustomTokensIBC()
+  let cw20 = useCustomTokensCW20()
+  const { data: ibcs } = useIBCWhitelist()
+  const { data: cw20s } = useCW20Whitelist()
+
+  if (cw20s) {
+    const arr = Object.values<CW20TokenItem>(cw20s)
+    const res = cw20.list.filter((obj) => {
+      return arr.some((tokenObj) => tokenObj.token === obj.token)
+    })
+    //
+    cw20.list = res
+  }
+
+  if (ibcs) {
+    const arr = Object.values<IBCTokenItem>(ibcs)
+    const res = ibc.list.filter((obj) => {
+      return arr.some((tokenObj) => tokenObj.denom === obj.denom)
+    })
+    //
+    ibc.list = res
+  }
 
   type AddedIBC = Record<string, CustomTokenIBC>
   type AddedCW20 = Record<TerraAddress, CustomTokenCW20>

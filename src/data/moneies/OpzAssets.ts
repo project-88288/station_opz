@@ -51,31 +51,6 @@ export const useCW20Whitelist = (disabled = false) => {
   )
 }
 
-/*
-export const useCW20Contracts = () => {
-  return useOpzAssetsByNetwork<CW20Contracts>("cw20/moneies.json")
-}
-
-export const useCW20Pairs = () => {
-  return useOpzAssetsByNetwork<CW20Pairs>("cw20/pairs.dex.json")
-}
-*/
-
-/*
-
-export type ContractNames =
-  | "assertLimitOrder"
-  | "routeswap"
-  | "tnsRegistry"
-  | "tnsReverseRecord"
-
-export type TerraContracts = Record<ContractNames, AccAddress>
-export const useTerraContracts = () => {
-  return useMoneiesAssetsByNetwork<TerraContracts>("contracts.json")
-}
-
-*/
-
 /* helpers */
 
 const sortWhitelistCW20 = (data: CW20Whitelist) => {

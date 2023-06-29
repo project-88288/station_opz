@@ -7,14 +7,35 @@ import IBCAsset from "./IBCAsset"
 import CW20Asset from "./CW20Asset"
 import Asset from "./Asset"
 import AddMoneies from "./AddMoneies"
+import { useCW20Whitelist, useIBCWhitelist } from "data/moneies/OpzAssets"
 
 const Moneies = () => {
   const { t } = useTranslation()
-  const { list: ibc } = useCustomTokensIBC()
-  const { list: cw20 } = useCustomTokensCW20()
+  let { list: ibc } = useCustomTokensIBC()
+  let { list: cw20 } = useCustomTokensCW20()
+  const { data: ibcs } = useIBCWhitelist()
+  const { data: cw20s } = useCW20Whitelist()
 
   const render = () => {
-    if (!ibc.length && !cw20.length) return null
+    if (!ibc.length && !cw20.length && !cw20s && !ibcs) return null
+
+    if (cw20s) {
+      const arr = Object.values<CW20TokenItem>(cw20s)
+      const res = cw20.filter((obj) => {
+        return arr.some((tokenObj) => tokenObj.token === obj.token)
+      })
+      //
+      cw20 = res
+    }
+
+    if (ibcs) {
+      const arr = Object.values<IBCTokenItem>(ibcs)
+      const res = ibc.filter((obj) => {
+        return arr.some((tokenObj) => tokenObj.denom === obj.denom)
+      })
+      //
+      ibc = res
+    }
 
     return (
       <>

@@ -57,7 +57,11 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
   const availableList = useMemo(() => {
     if (!(TFMTokens && ibcWhitelist && cw20Whitelist)) return
 
-    const tokens = TFMTokens.map(({ contract_addr }) => contract_addr)
+    const tokens_ = TFMTokens.map(({ contract_addr }) => contract_addr)
+    const ibcs = Object.values(ibcWhitelist).map((obj) => obj.denom)
+    const cw20s = Object.values(cw20Whitelist).map((obj) => obj.token)
+
+    const tokens = mergeArrays(tokens_, ibcs, cw20s)
 
     const ibc = tokens
       .filter(isDenomIBC)
@@ -157,4 +161,17 @@ export const validateTFMSlippageParams = (
 ): params is SlippageParams => {
   const { input, slippageInput, ...assets } = params
   return !!(validateAssets(assets) && input && slippageInput)
+}
+
+function mergeArrays(...arrays: any[]) {
+  const mergedSet = new Set()
+
+  // Add tokens from each array to the Set
+  arrays.forEach((array: any[]) => {
+    array.forEach((token) => mergedSet.add(token))
+  })
+
+  // Convert the Set back to an array
+  const mergedArray = Array.from(mergedSet)
+  return mergedArray as string[]
 }

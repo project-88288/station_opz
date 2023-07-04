@@ -2,9 +2,7 @@ import { useTranslation } from "react-i18next"
 import { useIsClassic } from "data/query"
 import { useNetworkName } from "data/wallet"
 import { LinkButton } from "components/general"
-// eslint-disable-next-line
 import { Card, Page } from "components/layout"
-// eslint-disable-next-line
 import { Wrong } from "components/feedback"
 import TxContext from "../TxContext"
 import SwapContext from "./classic/SwapContext"
@@ -16,11 +14,8 @@ import TFMSwapContext from "./tfm/TFMSwapContext"
 import TFMSwapForm from "./tfm/TFMSwapForm"
 // eslint-disable-next-line
 import TFMPoweredBy from "./tfm/TFMPoweredBy"
-// eslint-disable-next-line
 import SwapContext2 from "./terra2/SwapContext2"
-// eslint-disable-next-line
 import SingleSwapContext2 from "./terra2/SingleSwapContext2"
-// eslint-disable-next-line
 import SwapForm2 from "./terra2/SwapForm2"
 
 // The sequence below is required before rendering the Swap form:
@@ -51,7 +46,7 @@ const SwapTx = () => {
     )
   }
 
-  if (!isClassic && false)
+  if (!isClassic)
     return (
       <Page title={t("Swap")} small extra={<TFMPoweredBy />}>
         <TxContext>
@@ -64,16 +59,18 @@ const SwapTx = () => {
       </Page>
     )
 
-  if (!isClassic)
-    return (
-      <Page title={t("Swap")} small extra={<TFMPoweredBy />}>
-        <TxContext>
-          <TFMSwapContext>
-            <TFMSwapForm />
-          </TFMSwapContext>
-        </TxContext>
-      </Page>
-    )
+  /*
+if (!isClassic)
+  return (
+    <Page title={t("Swap")} small extra={<TFMPoweredBy />}>
+      <TxContext>
+        <TFMSwapContext>
+          <TFMSwapForm />
+        </TFMSwapContext>
+      </TxContext>
+    </Page>
+  )
+  */
 
   return (
     <Page title={t("Swap")} small extra={extra}>

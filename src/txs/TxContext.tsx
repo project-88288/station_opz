@@ -1,7 +1,7 @@
 import { PropsWithChildren } from "react"
 import { useTranslation } from "react-i18next"
 import createContext from "utils/createContext"
-import { GasPrices, useGasPrices } from "data/Terra/TerraAPI"
+import { GasPrices, useGasPrices } from "data/Terra/TerraFCD"
 import { Card } from "components/layout"
 import { ErrorBoundary, Wrong } from "components/feedback"
 import { useTxKey } from "./Tx"

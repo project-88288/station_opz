@@ -1,8 +1,6 @@
 import { useTranslation } from "react-i18next"
-import {
-  useIsTerraAPIAvailable,
-  useIsTerraLCDAvailable,
-} from "data/Terra/TerraAPI"
+import { useIsTerraAPIAvailable } from "data/Terra/TerraAPI"
+import { useIsTerraLCDAvailable } from "data/Terra/TerraLCD"
 import { Wrong } from "components/feedback"
 import { useNetwork } from "data/wallet"
 //import HistoryList from "./HistoryList"

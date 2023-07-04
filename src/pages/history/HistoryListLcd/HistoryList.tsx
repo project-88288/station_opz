@@ -7,7 +7,7 @@ import { queryKey } from "data/query"
 import { Button } from "components/general"
 import { Card, Col, Page } from "components/layout"
 import { Empty } from "components/feedback"
-import { useTerraLCDURL } from "data/Terra/TerraAPI"
+import { useTerraLCDURL } from "data/Terra/TerraLCD"
 import useAddress from "auth/hooks/useAddress"
 import HistoryItemLcd from "../HistoryItemLcd"
 

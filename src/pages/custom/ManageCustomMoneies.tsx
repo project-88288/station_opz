@@ -2,7 +2,7 @@ import { AccAddress } from "@terra-money/terra.js"
 import { combineState } from "data/query"
 import { useCustomTokensIBC } from "data/settings/CustomTokens"
 import { useCustomTokensCW20 } from "data/settings/CustomTokens"
-import { useIBCWhitelist, useCW20Whitelist } from "data/moneies/OpzAssets"
+import { useOpzIBCWhitelist, useOpzCW20Whitelist } from "data/moneies/OpzAssets"
 import { useTokenInfoCW20 } from "data/queries/wasm"
 import { Fetching } from "components/feedback"
 import WithSearchInput from "./WithSearchInput"
@@ -16,8 +16,8 @@ interface Props {
 const Component = ({ whitelist, keyword }: Props) => {
   let ibc = useCustomTokensIBC()
   let cw20 = useCustomTokensCW20()
-  const { data: ibcs } = useIBCWhitelist()
-  const { data: cw20s } = useCW20Whitelist()
+  const { data: ibcs } = useOpzIBCWhitelist()
+  const { data: cw20s } = useOpzCW20Whitelist()
 
   if (cw20s) {
     const arr = Object.values<CW20TokenItem>(cw20s)
@@ -125,8 +125,8 @@ const Component = ({ whitelist, keyword }: Props) => {
 }
 
 const ManageCustomMoneies = () => {
-  const { data: ibc, ...ibcWhitelistState } = useIBCWhitelist()
-  const { data: cw20, ...cw20WhitelistState } = useCW20Whitelist()
+  const { data: ibc, ...ibcWhitelistState } = useOpzIBCWhitelist()
+  const { data: cw20, ...cw20WhitelistState } = useOpzCW20Whitelist()
   const state = combineState(ibcWhitelistState, cw20WhitelistState)
 
   const render = () => {

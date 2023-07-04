@@ -39,11 +39,11 @@ export const useOpzAssetsByNetwork = <T>(
   )
 }
 
-export const useIBCWhitelist = () => {
+export const useOpzIBCWhitelist = () => {
   return useOpzAssetsByNetwork<IBCWhitelist>("ibc/moneies.json")
 }
 
-export const useCW20Whitelist = (disabled = false) => {
+export const useOpzCW20Whitelist = (disabled = false) => {
   return useOpzAssetsByNetwork<CW20Whitelist>(
     "cw20/moneies.json",
     disabled,

@@ -11,8 +11,10 @@ import { combineState, useIsClassic } from "data/query"
 import { useBankBalance } from "data/queries/bank"
 import { useTokenBalances } from "data/queries/wasm"
 import { readIBCDenom, readNativeDenom } from "data/token"
-import { useIBCWhitelist } from "data/Terra/TerraAssets"
-import { useCW20Whitelist } from "data/Terra/TerraAssets"
+// eslint-disable-next-line
+import { useIBCWhitelist, useCW20Whitelist } from "data/Terra/TerraAssets"
+// eslint-disable-next-line
+import { useOpzCW20Whitelist, useOpzIBCWhitelist } from "data/moneies/OpzAssets"
 import { useCustomTokensCW20 } from "data/settings/CustomTokens"
 import { Card } from "components/layout"
 import { SwapAssets, validateAssets } from "../classic/useSwapUtils"
@@ -50,7 +52,21 @@ const SingleSwapContext2 = ({ children }: PropsWithChildren<{}>) => {
   const bankBalance = useBankBalance()
   const { pairs } = useSwap2()
   const { list } = useCustomTokensCW20()
-  const customTokens = list.map(({ token }) => token)
+
+  /* from opz */
+  const { data: opzibc } = useOpzIBCWhitelist()
+  const { data: opzcw20 } = useOpzCW20Whitelist()
+  const _list = list.map(({ token }) => token)
+  let r: any[] = []
+  if (opzcw20 !== undefined && opzibc !== undefined) {
+    const _opzcw20 = Object.values(opzcw20).map(({ token }) => token)
+    const _opzibc = Object.values(opzibc).map(({ denom }) =>
+      denom.replace("ibc/", "")
+    )
+    r = mergeArrays(_list, _opzcw20, _opzibc)
+  }
+
+  const customTokens = r //  list.map(({ token }) => token)
 
   /* contracts */
   const { data: ibcWhitelist, ...ibcWhitelistState } = useIBCWhitelist()
@@ -203,4 +219,19 @@ export const calcMinimumReceive = (
   const minRatio = new BigNumber(1).minus(max_spread)
   const value = new BigNumber(simulatedValue).times(minRatio)
   return value.integerValue(BigNumber.ROUND_FLOOR).toString()
+}
+
+// Function to merge arrays without duplicates
+// eslint-disable-next-line
+function mergeArrays(...arrays: any[]) {
+  const mergedSet = new Set()
+
+  // Add tokens from each array to the Set
+  arrays.forEach((array) => {
+    array.forEach((element: any) => mergedSet.add(element))
+  })
+
+  // Convert the Set back to an array
+  const mergedArray = Array.from(mergedSet)
+  return mergedArray
 }

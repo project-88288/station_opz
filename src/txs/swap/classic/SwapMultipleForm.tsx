@@ -19,7 +19,7 @@ import { Table } from "components/layout"
 import { Read, Token } from "components/token"
 
 /* tx modules */
-import Tx, { calcMax } from "../Tx"
+import Tx, { calcMax } from "../../Tx"
 
 /* swap modules */
 import AssetFormItem, { AssetReadOnly } from "./components/AssetFormItem"

@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Read, ReadPercent } from "components/token"
-import { SwapAssets } from "./useSwapUtils"
-import { SwapSpread } from "./SingleSwapContext"
+import { SwapAssets } from "../classic/useSwapUtils"
+import { SwapSpread } from "../classic/SingleSwapContext"
 import { useTFMSwap } from "./TFMSwapContext"
 import Price from "./components/Price"
 

@@ -1,9 +1,13 @@
 import { PropsWithChildren, useMemo } from "react"
-import { zipObj } from "ramda"
-import { isDenomIBC } from "@terra.kitchen/utils"
+import { flatten, uniq, zipObj } from "ramda"
+import BigNumber from "bignumber.js"
+import { isDenomIBC, toAmount } from "@terra.kitchen/utils"
 import { AccAddress } from "@terra-money/terra.js"
-import { getAmount } from "utils/coin"
+// eslint-disable-next-line
+import { getAmount, sortDenoms } from "utils/coin"
+import { toPrice } from "utils/num"
 import createContext from "utils/createContext"
+import { useCurrency } from "data/settings/Currency"
 import { combineState, useIsClassic } from "data/query"
 import { useBankBalance } from "data/queries/bank"
 import { useTokenBalances } from "data/queries/wasm"
@@ -11,9 +15,9 @@ import { readIBCDenom, readNativeDenom } from "data/token"
 import { useIBCWhitelist } from "data/Terra/TerraAssets"
 import { useCW20Whitelist } from "data/Terra/TerraAssets"
 import { useCustomTokensCW20 } from "data/settings/CustomTokens"
-import { useTFMTokens } from "data/external/tfm"
 import { Card } from "components/layout"
-import { SwapAssets, validateAssets } from "./useSwapUtils"
+import { SwapAssets, validateAssets } from "../classic/useSwapUtils"
+import { useSwap2 } from "./SwapContext2"
 
 export interface SlippageParams extends SwapAssets {
   input: number
@@ -28,57 +32,59 @@ export interface SwapSpread {
   price: number
 }
 
-interface TFMSwap {
+interface SingleSwap {
   options: {
     coins: TokenItemWithBalance[]
     tokens: TokenItemWithBalance[]
   }
   findTokenItem: (token: Token) => TokenItemWithBalance
   findDecimals: (token: Token) => number
+  calcExpected: (params: SlippageParams) => SwapSpread
 }
 
-export const [useTFMSwap, TFMSwapProvider] =
-  createContext<TFMSwap>("useTFMSwap")
+export const [useSingleSwap2, SingleSwapProvider] =
+  createContext<SingleSwap>("useSingleSwap2")
 
-const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
+const SingleSwapContext2 = ({ children }: PropsWithChildren<{}>) => {
+  const currency = useCurrency()
   const isClassic = useIsClassic()
   const bankBalance = useBankBalance()
+  const { pairs } = useSwap2()
   const { list } = useCustomTokensCW20()
   const customTokens = list.map(({ token }) => token)
 
   /* contracts */
   const { data: ibcWhitelist, ...ibcWhitelistState } = useIBCWhitelist()
   const { data: cw20Whitelist, ...cw20WhitelistState } = useCW20Whitelist()
-  const { data: TFMTokens, ...TFMTokensState } = useTFMTokens()
 
   // Why?
   // To search tokens with symbol (ibc, cw20)
   // To filter tokens with balance (cw20)
-  const availableList = useMemo(() => {
-    if (!(TFMTokens && ibcWhitelist && cw20Whitelist)) return
+  const terraswapAvailableList = useMemo(() => {
+    if (!(ibcWhitelist && cw20Whitelist)) return
 
-    const tokens_ = TFMTokens.map(({ contract_addr }) => contract_addr)
-    const ibcs = Object.values(ibcWhitelist).map((obj) => obj.denom)
-    const cw20s = Object.values(cw20Whitelist).map((obj) => obj.token)
+    const terraswapAvailableList = uniq(
+      flatten(Object.values(pairs).map(({ assets }) => assets))
+    )
 
-    const tokens = mergeArrays(tokens_, ibcs, cw20s)
-
-    const ibc = tokens
+    const ibc = terraswapAvailableList
       .filter(isDenomIBC)
       .filter((denom) => ibcWhitelist[denom.replace("ibc/", "")])
 
-    const cw20 = tokens
-      .filter((addr) => AccAddress.validate(addr))
+    const cw20 = terraswapAvailableList
+      .filter(AccAddress.validate)
       .filter((token) => cw20Whitelist[token])
 
     return { ibc, cw20 }
-  }, [TFMTokens, cw20Whitelist, ibcWhitelist])
+  }, [cw20Whitelist, ibcWhitelist, pairs])
 
   // Fetch cw20 balances: only listed and added by the user
   const cw20TokensBalanceRequired = useMemo(() => {
-    if (!availableList) return []
-    return customTokens.filter((token) => availableList.cw20.includes(token))
-  }, [customTokens, availableList])
+    if (!terraswapAvailableList) return []
+    return customTokens.filter((token) =>
+      terraswapAvailableList.cw20.includes(token)
+    )
+  }, [customTokens, terraswapAvailableList])
 
   const cw20TokensBalancesState = useTokenBalances(cw20TokensBalanceRequired)
   const cw20TokensBalances = useMemo(() => {
@@ -94,7 +100,7 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
   }, [cw20TokensBalanceRequired, cw20TokensBalancesState])
 
   const context = useMemo(() => {
-    if (!(availableList && ibcWhitelist && cw20Whitelist)) return
+    if (!(terraswapAvailableList && ibcWhitelist && cw20Whitelist)) return
     if (!cw20TokensBalances) return
 
     const coins = [
@@ -104,13 +110,13 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
       },
     ]
 
-    const ibc = availableList.ibc.map((denom) => {
+    const ibc = terraswapAvailableList.ibc.map((denom) => {
       const item = ibcWhitelist[denom.replace("ibc/", "")]
       const balance = getAmount(bankBalance, denom)
       return { ...readIBCDenom(item), balance }
     })
 
-    const cw20 = availableList.cw20.map((token) => {
+    const cw20 = terraswapAvailableList.cw20.map((token) => {
       const balance = cw20TokensBalances[token] ?? "0"
       return { ...cw20Whitelist[token], balance }
     })
@@ -128,12 +134,40 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
 
     const findDecimals = (token: Token) => findTokenItem(token).decimals
 
-    return { options, findTokenItem, findDecimals }
+    const calcExpected = (params: SlippageParams) => {
+      const { offerAsset, askAsset, input, slippageInput, ratio } = params
+      const offerDecimals = findDecimals(offerAsset)
+      const askDecimals = findDecimals(askAsset)
+
+      /* terraswap */
+      const belief_price = new BigNumber(ratio)
+        .dp(18, BigNumber.ROUND_DOWN)
+        .toString()
+
+      /* routeswap | on-chain */
+      const max_spread = new BigNumber(slippageInput).div(100).toString()
+      const amount = toAmount(input, { decimals: offerDecimals })
+      const value = Number(amount) / ratio
+      const minimum_receive = calcMinimumReceive(value, max_spread)
+
+      /* expected price */
+      const decimals = askDecimals - offerDecimals
+      const price = toPrice(
+        new BigNumber(ratio).times(new BigNumber(10).pow(decimals))
+      )
+
+      return { max_spread, belief_price, minimum_receive, price }
+    }
+
+    return { options, findTokenItem, findDecimals, calcExpected }
+    // eslint-disable-next-line
   }, [
+    currency,
     bankBalance,
+    // activeDenoms,
     ibcWhitelist,
     cw20Whitelist,
-    availableList,
+    terraswapAvailableList,
     cw20TokensBalances,
     isClassic,
   ])
@@ -141,37 +175,33 @@ const TFMSwapContext = ({ children }: PropsWithChildren<{}>) => {
   const state = combineState(
     ibcWhitelistState,
     cw20WhitelistState,
-    TFMTokensState,
     ...cw20TokensBalancesState
   )
 
   const render = () => {
     if (!context) return null
-    return <TFMSwapProvider value={context}>{children}</TFMSwapProvider>
+    return <SingleSwapProvider value={context}>{children}</SingleSwapProvider>
   }
 
   return <Card {...state}>{render()}</Card>
 }
 
-export default TFMSwapContext
+export default SingleSwapContext2
 
 /* type */
-export const validateTFMSlippageParams = (
+export const validateSlippageParams = (
   params: Partial<SlippageParams>
 ): params is SlippageParams => {
-  const { input, slippageInput, ...assets } = params
-  return !!(validateAssets(assets) && input && slippageInput)
+  const { input, slippageInput, ratio, ...assets } = params
+  return !!(validateAssets(assets) && input && slippageInput && ratio)
 }
 
-function mergeArrays(...arrays: any[]) {
-  const mergedSet = new Set()
-
-  // Add tokens from each array to the Set
-  arrays.forEach((array: any[]) => {
-    array.forEach((token) => mergedSet.add(token))
-  })
-
-  // Convert the Set back to an array
-  const mergedArray = Array.from(mergedSet)
-  return mergedArray as string[]
+/* minimum received */
+export const calcMinimumReceive = (
+  simulatedValue: Value,
+  max_spread: string
+) => {
+  const minRatio = new BigNumber(1).minus(max_spread)
+  const value = new BigNumber(simulatedValue).times(minRatio)
+  return value.integerValue(BigNumber.ROUND_FLOOR).toString()
 }

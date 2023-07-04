@@ -7,15 +7,21 @@ import { Card, Page } from "components/layout"
 // eslint-disable-next-line
 import { Wrong } from "components/feedback"
 import TxContext from "../TxContext"
-import SwapContext from "./SwapContext"
-import SingleSwapContext from "./SingleSwapContext"
-import SwapForm from "./SwapForm"
+import SwapContext from "./classic/SwapContext"
+import SingleSwapContext from "./classic/SingleSwapContext"
+import SwapForm from "./classic/SwapForm"
 // eslint-disable-next-line
-import TFMSwapContext from "./TFMSwapContext"
+import TFMSwapContext from "./tfm/TFMSwapContext"
 // eslint-disable-next-line
-import TFMSwapForm from "./TFMSwapForm"
+import TFMSwapForm from "./tfm/TFMSwapForm"
 // eslint-disable-next-line
-import TFMPoweredBy from "./TFMPoweredBy"
+import TFMPoweredBy from "./tfm/TFMPoweredBy"
+// eslint-disable-next-line
+import SwapContext2 from "./terra2/SwapContext2"
+// eslint-disable-next-line
+import SingleSwapContext2 from "./terra2/SingleSwapContext2"
+// eslint-disable-next-line
+import SwapForm2 from "./terra2/SwapForm2"
 
 // The sequence below is required before rendering the Swap form:
 // 1. `TxContext` - Fetch gas prices through, like other forms.
@@ -44,6 +50,19 @@ const SwapTx = () => {
       </Page>
     )
   }
+
+  if (!isClassic && false)
+    return (
+      <Page title={t("Swap")} small extra={<TFMPoweredBy />}>
+        <TxContext>
+          <SwapContext2>
+            <SingleSwapContext2>
+              <SwapForm2 />
+            </SingleSwapContext2>
+          </SwapContext2>
+        </TxContext>
+      </Page>
+    )
 
   if (!isClassic)
     return (

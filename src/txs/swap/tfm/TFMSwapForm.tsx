@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation } from "react-router-dom"
 import { useQuery } from "react-query"
 import { useForm } from "react-hook-form"
+import update from "immutability-helper"
 import BigNumber from "bignumber.js"
-import { AccAddress } from "@terra-money/terra.js"
+import { AccAddress, Coin, Coins } from "@terra-money/terra.js"
+import { MsgExecuteContract } from "@terra-money/terra.js"
 import { isDenomTerra } from "@terra.kitchen/utils"
 import { toAmount } from "@terra.kitchen/utils"
 
@@ -14,50 +16,53 @@ import { getAmount, sortCoins } from "utils/coin"
 import { queryKey } from "data/query"
 import { useAddress } from "data/wallet"
 import { useBankBalance } from "data/queries/bank"
-import { useCustomTokensCW20 } from "data/settings/CustomTokens"
+import { queryTFMRoute, queryTFMSwap, TFM_ROUTER } from "data/external/tfm"
 
 /* components */
 import { Form, FormArrow, FormError } from "components/form"
-import { Checkbox, RadioButton } from "components/form"
+import { Checkbox } from "components/form"
 import { Read } from "components/token"
 
 /* tx modules */
-import { getPlaceholder, toInput, CoinInput } from "../utils"
-import validate from "../validate"
-import Tx, { getInitialGasDenom } from "../Tx"
+import { getPlaceholder, toInput } from "../../utils"
+import validate from "../../validate"
+import Tx, { getInitialGasDenom } from "../../Tx"
 
 /* swap modules */
 import AssetFormItem from "./components/AssetFormItem"
 import { AssetInput, AssetReadOnly } from "./components/AssetFormItem"
 import SelectToken from "./components/SelectToken"
 import SlippageControl from "./components/SlippageControl"
-import ExpectedPrice from "./components/ExpectedPrice"
-import useSwapUtils, { validateAssets } from "./useSwapUtils"
-import { SwapMode, validateParams } from "./useSwapUtils"
-import { SlippageParams } from "./SingleSwapContext"
-import { validateSlippageParams, useSingleSwap } from "./SingleSwapContext"
-import styles from "./SwapForm.module.scss"
+import TFMExpectedPrice from "./TFMExpectedPrice"
+import { SwapAssets, validateAssets } from "../classic/useSwapUtils"
+import { validateParams } from "../classic/useSwapUtils"
+import {
+  calcMinimumReceive,
+  SlippageParams,
+} from "../classic/SingleSwapContext"
+import { useTFMSwap, validateTFMSlippageParams } from "./TFMSwapContext"
 
-interface TxValues extends Partial<SlippageParams> {
-  mode?: SwapMode
+interface TFMSwapParams extends SwapAssets {
+  amount: string
+  slippage?: string
 }
 
-const SwapForm = () => {
+interface TxValues extends Partial<SlippageParams> {}
+
+const TFMSwapForm = () => {
   const { t } = useTranslation()
   const address = useAddress()
   const { state } = useLocation()
   const bankBalance = useBankBalance()
-  const { add } = useCustomTokensCW20()
 
   /* swap context */
-  const utils = useSwapUtils()
-  const { getIsSwapAvailable, getAvailableSwapModes } = utils
-  const { getMsgsFunction, getSimulateFunction, getSimulateQuery } = utils
-  const { options, findTokenItem, findDecimals, calcExpected } = useSingleSwap()
+  const { options, findTokenItem, findDecimals } = useTFMSwap()
 
   const initialOfferAsset =
     (state as Token) ??
-    (getAmount(bankBalance, "uusd") ? "uusd" : sortCoins(bankBalance)[0].denom)
+    (getAmount(bankBalance, "uluna")
+      ? "uluna"
+      : sortCoins(bankBalance)[0].denom)
   const initialGasDenom = getInitialGasDenom(bankBalance)
 
   /* options */
@@ -69,17 +74,8 @@ const SwapForm = () => {
     const getOptionList = (list: TokenItemWithBalance[]) =>
       list.map((item) => {
         const { token: value, balance } = item
-
-        const muted = {
-          offerAsset:
-            !!askAsset && !getIsSwapAvailable({ offerAsset: value, askAsset }),
-          askAsset:
-            !!offerAsset &&
-            !getIsSwapAvailable({ offerAsset, askAsset: value }),
-        }[key]
-
         const hidden = key === "offerAsset" && !showAll && !has(balance)
-        return { ...item, value, muted, hidden }
+        return { ...item, value, hidden }
       })
 
     return [
@@ -97,12 +93,7 @@ const SwapForm = () => {
   const { register, trigger, watch, setValue, handleSubmit, formState } = form
   const { errors } = formState
   const values = watch()
-  const { mode, offerAsset, askAsset, input, slippageInput, ratio } = values
-
-  useEffect(() => {
-    // validate input on change mode
-    if (mode) trigger("input")
-  }, [mode, trigger])
+  const { offerAsset, askAsset, input, slippageInput } = values
 
   const assets = useMemo(
     () => ({ offerAsset, askAsset }),
@@ -110,13 +101,12 @@ const SwapForm = () => {
   )
 
   const slippageParams = useMemo(
-    () => ({ offerAsset, askAsset, input, slippageInput, ratio }),
-    [askAsset, input, offerAsset, ratio, slippageInput]
+    () => ({ offerAsset, askAsset, input, slippageInput }),
+    [offerAsset, askAsset, input, slippageInput]
   )
 
   const offerTokenItem = offerAsset ? findTokenItem(offerAsset) : undefined
   const offerDecimals = offerAsset ? findDecimals(offerAsset) : undefined
-  const askTokenItem = askAsset ? findTokenItem(askAsset) : undefined
   const askDecimals = askAsset ? findDecimals(askAsset) : undefined
 
   const amount = toAmount(input, { decimals: offerDecimals })
@@ -129,29 +119,26 @@ const SwapForm = () => {
   }
 
   /* simulate | execute */
-  const params = { amount, ...assets }
-  const availableSwapModes = getAvailableSwapModes(assets)
-  const isSwapAvailable = getIsSwapAvailable(assets)
-  const simulateQuery = getSimulateQuery(params)
+  const slippage = new BigNumber(slippageInput!).div(100).toString()
+  const params = { ...assets, amount, slippage }
 
   /* simulate */
-  const { data: simulationResults, isFetching } = useQuery({
-    ...simulateQuery,
-    onSuccess: ({ profitable }) => setValue("mode", profitable?.mode),
-  })
+  const { data: simulationResults, isFetching } = useQuery(
+    ["TFM.simulate.swap", params],
+    async () => {
+      if (!validateParams(params)) throw new Error()
+      const route = await queryTFMRoute(toTFMParams(params))
+      const swap = await queryTFMSwap(toTFMParams(params))
+      return [route, swap] as const
+    },
+    { enabled: validateParams(params) }
+  )
 
-  /* Simulated value to create tx */
-  // Simulated for all possible modes
-  // Do not simulate again even if the mode changes
-  const results = simulationResults?.values
-  const result = results && mode && results[mode]
-  const simulatedValue = result?.value
-  const simulatedRatio = result?.ratio
-
-  useEffect(() => {
-    // Set ratio on simulate
-    if (simulatedRatio) setValue("ratio", simulatedRatio)
-  }, [simulatedRatio, setValue])
+  const simulatedValue = useMemo(() => {
+    if (!(simulationResults && askDecimals)) return
+    const [{ return_amount }] = simulationResults
+    return toAmount(return_amount, { decimals: askDecimals })
+  }, [askDecimals, simulationResults])
 
   /* Select asset */
   const onSelectAsset = (key: "offerAsset" | "askAsset") => {
@@ -160,12 +147,6 @@ const SwapForm = () => {
         offerAsset: { offerAsset: value, askAsset },
         askAsset: { offerAsset, askAsset: value },
       }[key]
-
-      // set mode if only one available
-      const availableSwapModes = getAvailableSwapModes(assets)
-      const availableSwapMode =
-        availableSwapModes?.length === 1 ? availableSwapModes[0] : undefined
-      setValue("mode", availableSwapMode)
 
       // empty opposite asset if select the same asset
       if (assets.offerAsset === assets.askAsset) {
@@ -184,62 +165,52 @@ const SwapForm = () => {
 
   /* tx */
   const balance = offerTokenItem?.balance
-  const createTx = useCallback(
-    (values: TxValues) => {
-      const { mode, offerAsset, askAsset, input, slippageInput, ratio } = values
-      if (!(mode && input && offerAsset && askAsset && slippageInput && ratio))
-        return
+  const createTx = useCallback(() => {
+    if (!address) return
+    if (!offerAsset) return
+    if (!simulationResults) return
 
-      const offerDecimals = findDecimals(offerAsset)
-      const amount = toAmount(input, { decimals: offerDecimals })
-      if (!balance || new BigNumber(amount).gt(balance)) return
+    const [, swap] = simulationResults
 
-      const params = { amount, offerAsset, askAsset }
-      if (!validateParams(params)) return
+    if (!("value" in swap)) return
 
-      const getMsgs = getMsgsFunction(mode)
+    const { value } = swap
+    const contract = AccAddress.validate(value.contract)
+      ? value.contract
+      : TFM_ROUTER
 
-      /* slippage */
-      const expected = calcExpected({ ...params, input, slippageInput, ratio })
-      return { msgs: getMsgs({ ...params, ...expected }) }
-    },
-    [balance, calcExpected, findDecimals, getMsgsFunction]
-  )
+    const execute_msg = AccAddress.validate(offerAsset)
+      ? update(value.execute_msg, { send: { contract: { $set: TFM_ROUTER } } })
+      : value.execute_msg
+
+    const coins = new Coins(value.coins.map(Coin.fromData))
+
+    return {
+      msgs: [new MsgExecuteContract(address, contract, execute_msg, coins)],
+    }
+  }, [address, offerAsset, simulationResults])
 
   /* fee */
   const { data: estimationTxValues } = useQuery(
-    ["estimationTxValues", { mode, assets, balance }],
+    ["estimationTxValues", { assets }],
     async () => {
-      if (!(mode && validateAssets(assets) && balance)) return
+      if (!validateAssets(assets)) return
       const { offerAsset, askAsset } = assets
-      const simulate = getSimulateFunction(mode)
       // estimate fee only after ratio simulated
-      const { ratio } = await simulate({ ...assets, amount: balance })
-      const input = toInput(balance, findDecimals(offerAsset))
-      return { mode, offerAsset, askAsset, ratio, input, slippageInput: 1 }
+      return { offerAsset, askAsset, input, slippageInput: 1 }
     }
   )
 
-  const taxRequired = mode !== SwapMode.ONCHAIN
   const token = offerAsset
-  const coins = [{ input, denom: token, taxRequired }] as CoinInput[]
   const decimals = offerDecimals
   const tx = {
     token,
     decimals,
     amount,
-    coins,
     balance,
     initialGasDenom,
     estimationTxValues,
     createTx,
-    taxRequired,
-    onPost: () => {
-      // add custom token on ask cw20
-      if (!(askAsset && AccAddress.validate(askAsset) && askTokenItem)) return
-      const { balance, ...rest } = askTokenItem
-      add(rest as CustomTokenCW20)
-    },
     queryKeys: [offerAsset, askAsset]
       .filter((asset) => asset && AccAddress.validate(asset))
       .map((token) => [
@@ -251,46 +222,35 @@ const SwapForm = () => {
 
   const disabled = isFetching ? t("Simulating...") : false
 
-  /* render */
-  const renderRadioGroup = () => {
-    if (!(validateAssets(assets) && isSwapAvailable)) return null
-
-    return (
-      <section className={styles.modes}>
-        {availableSwapModes.map((key) => {
-          const checked = mode === key
-
-          return (
-            <RadioButton
-              {...register("mode")}
-              value={key}
-              checked={checked}
-              key={key}
-            >
-              {key}
-            </RadioButton>
-          )
-        })}
-      </section>
-    )
-  }
-
   /* render: expected price */
   const renderExpected = () => {
-    if (!(mode && validateSlippageParams(slippageParams))) return null
-    const expected = calcExpected(slippageParams)
-    const props = { mode, ...slippageParams, ...expected, ...result }
-    return <ExpectedPrice {...props} isLoading={isFetching} />
+    if (!(simulatedValue && simulationResults)) return null
+    if (!validateTFMSlippageParams(slippageParams)) return null
+
+    const [{ return_amount, input_amount, price_impact }] = simulationResults
+    const expected = {
+      minimum_receive: calcMinimumReceive(simulatedValue, slippage),
+      price: new BigNumber(input_amount).div(return_amount).toNumber(),
+      price_impact,
+    }
+
+    const props = { ...slippageParams, ...expected }
+    return <TFMExpectedPrice {...props} />
   }
 
   const slippageDisabled = [offerAsset, askAsset].every(isDenomTerra)
+
+  const isFailed = useMemo(() => {
+    if (!simulationResults) return false
+    const [, swap] = simulationResults
+    if ("success" in swap && !swap.success) return true
+    return false
+  }, [simulationResults])
 
   return (
     <Tx {...tx} disabled={disabled}>
       {({ max, fee, submit }) => (
         <Form onSubmit={handleSubmit(submit.fn)}>
-          {renderRadioGroup()}
-
           <AssetFormItem
             label={t("From")}
             extra={max.render(async (value) => {
@@ -328,6 +288,7 @@ const SwapForm = () => {
                   autoFocus
                 />
               }
+              showName
             />
           </AssetFormItem>
 
@@ -353,6 +314,7 @@ const SwapForm = () => {
                   )}
                 </AssetReadOnly>
               }
+              showName
             />
           </AssetFormItem>
 
@@ -372,7 +334,7 @@ const SwapForm = () => {
           {renderExpected()}
           {fee.render()}
 
-          {validateAssets(assets) && !isSwapAvailable && (
+          {validateAssets(assets) && isFailed && (
             <FormError>{t("Pair does not exist")}</FormError>
           )}
 
@@ -383,4 +345,10 @@ const SwapForm = () => {
   )
 }
 
-export default SwapForm
+export default TFMSwapForm
+
+/* helpers */
+const toTFMParams = (params: TFMSwapParams) => {
+  const { offerAsset: token0, askAsset: token1, amount } = params
+  return { ...params, token0, token1, amount, use_split: true }
+}

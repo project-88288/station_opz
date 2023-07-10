@@ -68,6 +68,8 @@ const SingleSwapContext2 = ({ children }: PropsWithChildren<{}>) => {
 
   const customTokens = r //  list.map(({ token }) => token)
 
+  console.log(customTokens)
+
   /* contracts */
   const { data: ibcWhitelist, ...ibcWhitelistState } = useIBCWhitelist()
   const { data: cw20Whitelist, ...cw20WhitelistState } = useCW20Whitelist()

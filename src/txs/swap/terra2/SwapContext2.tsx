@@ -17,6 +17,9 @@ const SwapContext2 = ({ children }: PropsWithChildren<{}>) => {
   const { data: pairs, ...cw20PairsState } = useCW20Pairs()
   const { data: contracts, ...contractsState } = useTerraContracts()
 
+  console.log(pairs)
+  console.log(contracts)
+
   const state = combineState(contractsState, cw20PairsState)
 
   const render = () => {

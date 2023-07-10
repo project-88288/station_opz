@@ -65,43 +65,43 @@ export const useNav = () => {
 
   const menu = [
     {
-      path: "/#/wallet",
+      path: "/wallet",
       element: <Wallet />,
       title: t("Wallet"),
       icon: <WalletIcon {...ICON_SIZE} />,
     },
     {
-      path: "/#/history",
+      path: "/history",
       element: <History />,
       title: t("History"),
       icon: <HistoryIcon {...ICON_SIZE} />,
     },
     {
-      path: "/#/swap",
+      path: "/swap",
       element: <SwapTx />,
       title: t("Swap"),
       icon: <SwapIcon {...ICON_SIZE} />,
     },
     {
-      path: "/#/stake",
+      path: "/stake",
       element: <Stake />,
       title: t("Stake"),
       icon: <StakeIcon {...ICON_SIZE} />,
     },
     {
-      path: "/#/gov",
+      path: "/gov",
       element: <Governance />,
       title: t("Governance"),
       icon: <GovernanceIcon {...ICON_SIZE} />,
     },
     {
-      path: "/#/nft",
+      path: "/nft",
       element: <NFT />,
       title: t("NFT"),
       icon: <NFTIcon {...ICON_SIZE} />,
     },
     {
-      path: "/#/contract",
+      path: "/contract",
       element: <Contract />,
       title: t("Contract"),
       icon: <ContractIcon {...ICON_SIZE} />,
@@ -109,46 +109,46 @@ export const useNav = () => {
   ]
 
   const routes = [
-    { path: "/#/", element: <Dashboard /> },
+    { path: "/", element: <Dashboard /> },
 
     /* pages */
     ...menu,
-    { path: "/#/validator/:address", element: <ValidatorDetails /> },
-    { path: "/#/proposal/:id", element: <ProposalDetails /> },
+    { path: "/validator/:address", element: <ValidatorDetails /> },
+    { path: "/proposal/:id", element: <ProposalDetails /> },
 
     /* multisig */
-    { path: "/#/multisig/sign", element: <SignMultisigTxPage /> },
-    { path: "/#/multisig/post", element: <PostMultisigTxPage /> },
+    { path: "/multisig/sign", element: <SignMultisigTxPage /> },
+    { path: "/multisig/post", element: <PostMultisigTxPage /> },
 
     /* txs */
-    { path: "/#/send", element: <SendTx /> },
-    { path: "/#/nft/transfer", element: <TransferCW721Tx /> },
-    { path: "/#/swap/multiple", element: <SwapMultipleTx /> },
-    { path: "/#/stake/:address", element: <StakeTx /> },
-    { path: "/#/rewards", element: <WithdrawRewardsTx /> },
-    { path: "/#/commission", element: <WithdrawCommissionTx /> },
-    { path: "/#/proposal/new", element: <SubmitProposalTx /> },
-    { path: "/#/proposal/:id/deposit", element: <DepositTx /> },
-    { path: "/#/proposal/:id/vote", element: <VoteTx /> },
-    { path: "/#/contract/instantiate", element: <InstantiateContractTx /> },
-    { path: "/#/contract/store", element: <StoreCodeTx /> },
-    { path: "/#/contract/execute/:contract", element: <ExecuteContractTx /> },
-    { path: "/#/contract/migrate/:contract", element: <MigrateContractTx /> },
+    { path: "/send", element: <SendTx /> },
+    { path: "/nft/transfer", element: <TransferCW721Tx /> },
+    { path: "/swap/multiple", element: <SwapMultipleTx /> },
+    { path: "/stake/:address", element: <StakeTx /> },
+    { path: "/rewards", element: <WithdrawRewardsTx /> },
+    { path: "/commission", element: <WithdrawCommissionTx /> },
+    { path: "/proposal/new", element: <SubmitProposalTx /> },
+    { path: "/proposal/:id/deposit", element: <DepositTx /> },
+    { path: "/proposal/:id/vote", element: <VoteTx /> },
+    { path: "/contract/instantiate", element: <InstantiateContractTx /> },
+    { path: "/contract/store", element: <StoreCodeTx /> },
+    { path: "/contract/execute/:contract", element: <ExecuteContractTx /> },
+    { path: "/contract/migrate/:contract", element: <MigrateContractTx /> },
     {
-      path: "/#/contract/updateadmin/:contract",
+      path: "/contract/updateadmin/:contract",
       element: <UpdateAdminContractTx />,
     },
-    { path: "/#/earn", element: <AnchorEarnTx /> },
-    { path: "/#/donate", element: <DonateAllVestingTokensTx /> },
+    { path: "/earn", element: <AnchorEarnTx /> },
+    { path: "/donate", element: <DonateAllVestingTokensTx /> },
 
     /* auth */
-    { path: "/#/auth/*", element: <Auth /> },
-    { path: "/#/networks", element: <ManageNetworksPage /> },
-    { path: "/#/network/new", element: <AddNetworkPage /> },
-    { path: "/#/settings", element: <Settings /> },
+    { path: "/auth/*", element: <Auth /> },
+    { path: "/networks", element: <ManageNetworksPage /> },
+    { path: "/network/new", element: <AddNetworkPage /> },
+    { path: "/settings", element: <Settings /> },
 
     /* dev */
-    { path: "/#/labs", element: <Labs /> },
+    { path: "/labs", element: <Labs /> },
 
     /* 404 */
     { path: "*", element: <NotFound /> },

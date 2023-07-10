@@ -30,7 +30,7 @@ const Nav = () => {
 
       {menu.map(({ path, title, icon }) => (
         <NavLink
-          to={`#${path}`}
+          to={`${path}`}
           className={({ isActive }) =>
             cx(styles.item, styles.link, { active: isActive })
           }

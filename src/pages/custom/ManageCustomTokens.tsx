@@ -3,6 +3,7 @@ import { combineState } from "data/query"
 import { useCustomTokensIBC } from "data/settings/CustomTokens"
 import { useCustomTokensCW20 } from "data/settings/CustomTokens"
 import { useIBCWhitelist, useCW20Whitelist } from "data/Terra/TerraAssets"
+import { useOpzCW20Whitelist, useOpzIBCWhitelist } from "data/moneies/OpzAssets"
 import { useTokenInfoCW20 } from "data/queries/wasm"
 import { Fetching } from "components/feedback"
 import WithSearchInput from "./WithSearchInput"
@@ -16,29 +17,39 @@ interface Props {
 const Component = ({ whitelist, keyword }: Props) => {
   let ibc = useCustomTokensIBC()
   let cw20 = useCustomTokensCW20()
-  const { data: ibcs } = useIBCWhitelist()
-  const { data: cw20s } = useCW20Whitelist()
+  let cw20s = whitelist.cw20
+  let ibcs = whitelist.ibc
+  const { data: opzibc } = useOpzIBCWhitelist()
+  const { data: opzcw20 } = useOpzCW20Whitelist()
 
-  if (cw20s) {
-    const arr = Object.values<CW20TokenItem>(cw20s)
-    const res = cw20.list.filter((obj) => {
-      return arr.some((tokenObj) => tokenObj.token === obj.token)
-    })
-    //
-    cw20.list = res
+  if (cw20s && opzcw20) {
+    const cw20arr = Object.values<CW20TokenItem>(cw20s)
+    const opzcw20arr = Object.values<CW20TokenItem>(opzcw20)
+    const cw20arr_ = cw20arr.filter(
+      (obj) => !opzcw20arr.some((obj_) => obj.token === obj_.token)
+    )
+    cw20s = cw20arr_.reduce((result: Record<string, {}>, obj) => {
+      result[obj.token] = obj
+      return result
+    }, {}) as CW20Whitelist
+    cw20.list = cw20arr_
   }
 
-  if (ibcs) {
-    const arr = Object.values<IBCTokenItem>(ibcs)
-    const res = ibc.list.filter((obj) => {
-      return arr.some((tokenObj) => tokenObj.denom === obj.denom)
-    })
-    //
-    ibc.list = res
+  if (ibcs && opzibc) {
+    const ibcarr = Object.values<IBCTokenItem>(ibcs)
+    const opzibcarr = Object.values<IBCTokenItem>(opzibc)
+    const ibcarr_ = ibcarr.filter(
+      (obj) => !opzibcarr.some((obj_) => obj.denom === obj_.denom)
+    )
+    ibcs = ibcarr_.reduce((result: Record<string, {}>, obj) => {
+      result[obj.denom] = obj
+      return result
+    }, {}) as IBCWhitelist
+    ibc.list = ibcarr_
   }
 
-  type AddedIBC = Record<string, CustomTokenIBC>
-  type AddedCW20 = Record<TerraAddress, CustomTokenCW20>
+  type AddedIBC = Record<string, IBCTokenItem>
+  type AddedCW20 = Record<TerraAddress, CW20TokenItem>
   const added = {
     ibc: ibc.list.reduce<AddedIBC>(
       (acc, item) => ({ ...acc, [item.denom.replace("ibc/", "")]: item }),
@@ -53,8 +64,8 @@ const Component = ({ whitelist, keyword }: Props) => {
   const merged = {
     ...added.ibc,
     ...added.cw20,
-    ...whitelist.ibc,
-    ...whitelist.cw20,
+    ...ibcs,
+    ...cw20s,
   }
 
   // if listed
@@ -127,6 +138,7 @@ const Component = ({ whitelist, keyword }: Props) => {
 const ManageCustomTokens = () => {
   const { data: ibc, ...ibcWhitelistState } = useIBCWhitelist()
   const { data: cw20, ...cw20WhitelistState } = useCW20Whitelist()
+
   const state = combineState(ibcWhitelistState, cw20WhitelistState)
 
   const render = () => {

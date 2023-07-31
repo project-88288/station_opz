@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
-import { useNavigate, useRoutes } from "react-router-dom"
+import { useNavigate, useRoutes, Navigate } from "react-router-dom"
 
 import { ReactComponent as WalletIcon } from "styles/images/menu/Wallet.svg"
 import { ReactComponent as NFTIcon } from "styles/images/menu/NFT.svg"
@@ -55,7 +55,7 @@ import Settings from "pages/Settings"
 import Labs from "pages/labs/Labs"
 
 /* 404 */
-import NotFound from "pages/NotFound"
+//import NotFound from "pages/NotFound"
 import DonateAllVestingTokensTx from "txs/stake/DonateAllVestingTokensTx"
 
 const ICON_SIZE = { width: 20, height: 20 }
@@ -151,7 +151,7 @@ export const useNav = () => {
     { path: "/labs", element: <Labs /> },
 
     /* 404 */
-    { path: "*", element: <NotFound /> },
+    { path: "*", element: <Navigate to="/" /> },
   ]
 
   return { menu, element: useRoutes(routes) }

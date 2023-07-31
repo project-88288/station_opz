@@ -1,0 +1,12 @@
+[Unit]
+Description= station-opz-app
+Documentation=https://station_opz.opz.life
+
+[Service]
+ExecStart=/usr/bin/serve build
+Restart=always
+User=chaiya
+WorkingDirectory=/home/chaiya/station_opz
+
+[Install]
+WantedBy=multi-user.target

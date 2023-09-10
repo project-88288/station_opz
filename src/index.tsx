@@ -1,6 +1,6 @@
 import { StrictMode } from "react"
 import { render } from "react-dom"
-import { BrowserRouter } from "react-router-dom"
+import { HashRouter } from "react-router-dom"
 import { ReactQueryDevtools } from "react-query/devtools"
 import { RecoilRoot } from "recoil"
 import { getChainOptions } from "@terra-money/wallet-controller"
@@ -25,7 +25,7 @@ getChainOptions().then((chainOptions) =>
   render(
     <StrictMode>
       <RecoilRoot>
-        <BrowserRouter>
+        <HashRouter>
           <ScrollToTop />
           <WalletProvider {...chainOptions} connectorOpts={connectorOpts}>
             <InitNetworks>
@@ -37,7 +37,7 @@ getChainOptions().then((chainOptions) =>
             </InitNetworks>
           </WalletProvider>
           {debug.query && <ReactQueryDevtools position="bottom-right" />}
-        </BrowserRouter>
+        </HashRouter>
       </RecoilRoot>
     </StrictMode>,
     document.getElementById("station")

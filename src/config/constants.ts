@@ -51,8 +51,9 @@ export const terraAPIURL = (name?: String) => {
 }
 
 /* website */
-export const STATION = "https://station.terra.money"
-export const FINDER = "https://finder.terra.money"
+export const FINDER = "https://finder.opz.life/#"
+export const STATION = "https://station.opz.life"
+
 export const EXTENSION =
   "https://chrome.google.com/webstore/detail/aiifbnbfobpmeekipheeijimdpnlpgpp"
 export const TUTORIAL =

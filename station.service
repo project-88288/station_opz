@@ -1,0 +1,12 @@
+[Unit]
+Description= opz_station
+Documentation=https://opzlabs.ddns.net
+
+[Service]
+ExecStart=/usr/bin/serve build -l 80
+Restart=always
+User=root
+WorkingDirectory=/home/chaiya/opz_station
+
+[Install]
+WantedBy=multi-user.target
